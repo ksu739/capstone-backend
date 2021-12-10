@@ -1,0 +1,26 @@
+DELIMITER $$
+CREATE procedure checkup()
+begin
+	
+    set @minnum := (select min(nodenum) from nodedb);
+    set @maxnum := (select max(nodenum) from nodedb);
+    
+    while (minnum <= maxnum) DO
+		set @tempnum := @minnum + 1;
+        
+        IF  (select myhash from nodedb where (indexnum = minnum)) <> ( select prehash from nodedb where (indexnum = tempnum)) 
+		then insert into checkdb(indexnum) values(indexnum);
+        end if;
+        
+        select @minnum := @minnum + 1;
+	end while;
+    
+end$$
+DELIMITER ;
+
+
+create EVENT IF NOT EXISTS checkup
+	on schedule
+		every 1 hour
+	DO
+		CALL checkup();
